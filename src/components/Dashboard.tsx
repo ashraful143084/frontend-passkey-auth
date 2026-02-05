@@ -142,7 +142,9 @@ const Dashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
             const options = mockPasskeyService.getRegistrationOptions(newPasskeyName, authType);
             console.log('options', options);
             const attResp = await startRegistration({ optionsJSON: options });
+            console.log('attResp', attResp);
             const verified = await mockPasskeyService.verifyRegistration(attResp, newPasskeyName);
+            console.log('verified', verified);
 
             if (verified) {
                 setSavedPasskeys(mockPasskeyService.getRegisteredPasskeys());

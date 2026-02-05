@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { mockPasskeyService } from "../services/mockPasskeyService";
+import { useLogin, useRegister } from "../hooks/useAuth";
 
 interface AuthProps {
   onLogin: () => void;
@@ -19,6 +20,14 @@ interface AuthProps {
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const loginMutation = useLogin();
+  const registerMutation = useRegister();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLDivElement>(null);
@@ -79,9 +88,37 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin();
+    if (isLogin) {
+        loginMutation.mutate({ email, password }, {
+            onSuccess: () => {
+                onLogin();
+            },
+            onError: (error) => {
+                if(error instanceof Error) {
+                  alert(`Login failed: ${error.message}`);
+                } else {
+                  alert('Login failed');
+                }
+            }
+        });
+    } else {
+        registerMutation.mutate({ email, password }, {
+          
+            onSuccess: () => {
+                alert("Registration successful! Please login.");
+                setIsLogin(true);
+            },
+            onError: (error) => {
+                if(error instanceof Error) {
+                  alert(`Registration failed: ${error.message}`);
+                } else {
+                  alert('Registration failed');
+                }
+            }
+        });
+    }
   };
 
   const handlePasskeyLogin = async () => {
@@ -115,6 +152,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       setPasskeyLoading(false);
     }
   };
+
+  const isLoading = loginMutation.isPending || registerMutation.isPending;
 
   return (
     <div
@@ -151,6 +190,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                   <input
                     type="text"
                     placeholder="Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     className="w-full bg-slate-950/50 border border-teal-500/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:bg-slate-950/80 transition-all text-sm"
                     required
                   />
@@ -161,6 +202,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 <input
                   type="email"
                   placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full bg-slate-950/50 border border-teal-500/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:bg-slate-950/80 transition-all text-sm"
                   required
                 />
@@ -170,6 +213,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                 <input
                   type="password"
                   placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-slate-950/50 border border-teal-500/10 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:bg-slate-950/80 transition-all text-sm"
                   required
                 />
@@ -184,9 +229,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               <div className="auth-el spacer-passkey mb-6">
                 <button
                   onClick={handlePasskeyLogin}
-                  disabled={passkeyLoading}
+                  disabled={passkeyLoading || isLoading}
                   type="button"
-                  className="w-full relative overflow-hidden bg-slate-800 hover:bg-slate-700 border border-teal-500/20 text-white font-semibold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-3 group active:scale-[0.98]"
+                  className="w-full relative overflow-hidden bg-slate-800 hover:bg-slate-700 border border-teal-500/20 text-white font-semibold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-3 group active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {passkeyLoading ? (
                     <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
@@ -205,39 +250,23 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               <div className="auth-el pt-2">
                 <button
                   type="submit"
-                  className="w-full relative overflow-hidden bg-gradient-to-r from-teal-500 to-ocean-600 hover:from-teal-400 hover:to-ocean-500 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 group shadow-xl shadow-teal-500/20 active:scale-[0.98]"
+                  disabled={isLoading}
+                  className="w-full relative overflow-hidden bg-gradient-to-r from-teal-500 to-ocean-600 hover:from-teal-400 hover:to-ocean-500 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 group shadow-xl shadow-teal-500/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  <span className="relative z-10">
-                    {isLogin ? "Log In" : "Sign Up"}
-                  </span>
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
+                  {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                      <>
+                        <span className="relative z-10">
+                            {isLogin ? "Log In" : "Sign Up"}
+                        </span>
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
+                      </>
+                  )}
                   <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             </form>
-
-            {/* {isLogin && (
-              <div className="auth-el spacer-passkey mb-6">
-                <button
-                  onClick={handlePasskeyLogin}
-                  disabled={passkeyLoading}
-                  type="button"
-                  className="w-full relative overflow-hidden bg-slate-800 hover:bg-slate-700 border border-teal-500/20 text-white font-semibold py-3.5 rounded-2xl transition-all flex items-center justify-center gap-3 group active:scale-[0.98]"
-                >
-                  {passkeyLoading ? (
-                    <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <div className="flex -space-x-1">
-                        <ScanFace className="w-5 h-5 text-teal-400" />
-                        <Fingerprint className="w-5 h-5 text-blue-400" />
-                      </div>
-                      <span>Sign in with Passkey</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )} */}
 
             <div className="auth-el text-center">
               <button

@@ -9,8 +9,7 @@ import {
   Fingerprint,
   ScanFace,
 } from "lucide-react";
-import { startAuthentication } from "@simplewebauthn/browser";
-import { mockPasskeyService } from "../services/mockPasskeyService";
+import { loginPasskey } from "../hooks/usePasskey";
 import { useLogin, useRegister } from "../hooks/useAuth";
 
 interface AuthProps {
@@ -124,18 +123,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const handlePasskeyLogin = async () => {
     setPasskeyLoading(true);
     try {
-      // 1. Get options from server (mock)
-      const options = mockPasskeyService.getAuthenticationOptions();
-
-      console.log('Options:', options);
-
-      // 2. Start WebAuthn ceremony
-      const asseResp = await startAuthentication({ optionsJSON: options });
-
-      // 3. Verify with server (mock)
-      const verified = await mockPasskeyService.verifyAuthentication(asseResp);
-
-      if (verified) {
+      const result = await loginPasskey();
+      if (result.verified) {
+        if (result.user.accessToken) {
+          localStorage.setItem("access_token", result.user.accessToken);
+        }
+        if (result.user) {
+          localStorage.setItem("user", JSON.stringify(result.user));
+        }
         onLogin();
       } else {
         alert("Passkey verification failed");
@@ -144,8 +139,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
       console.error("Passkey error:", error);
       // Don't alert if user cancelled to avoid annoyance
       if ((error as Error).name !== "NotAllowedError") {
-        // In a real app, you might show a toast here
-        // for now console error is enough as per instructions to keep it simple or user might see alert
         alert(
           "Failed to sign in with Passkey. Use password if issue persists.",
         );

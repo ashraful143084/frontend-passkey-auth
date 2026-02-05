@@ -7,7 +7,7 @@ interface AuthCredentials {
 }
 
 interface AuthResponse {
-    access_token: string;
+    accessToken: string;
     user: {
         email: string;
         hasPasskey: boolean;
@@ -19,13 +19,11 @@ export const useLogin = () => {
     return useMutation({
         mutationFn: async (credentials: AuthCredentials) => {
             const response = await api.post<AuthResponse>('/auth/login', credentials);
-            console.log(response.data);
             return response.data;
         },
         onSuccess: (data) => {
-            console.log('Login successful, response data:', data);
             if (data.user) {
-                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('access_token', data.accessToken);
                 localStorage.setItem('user', JSON.stringify(data.user));
             } else {
                 console.error('Login response missing user object:', data);

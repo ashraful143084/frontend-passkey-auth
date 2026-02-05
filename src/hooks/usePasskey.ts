@@ -1,4 +1,4 @@
-import { startRegistration } from '@simplewebauthn/browser';
+import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 import api from '../services/api';
 
 export const registerPasskey = async (userId: string, userEmail: string) => {
@@ -28,6 +28,33 @@ export const registerPasskey = async (userId: string, userEmail: string) => {
         return verifyResponse.data;
     } catch (error) {
         console.error('Passkey registration failed:', error);
+        throw error;
+    }
+};
+
+export const loginPasskey = async () => {
+    try {
+        // 1. Get authentication options from backend
+        console.log('Login Passkey');
+        const optionsResponse = await api.post('/passkeys/authenticate');
+        const options = optionsResponse.data;
+        console.log('Options Response', options);
+
+        // 2. Start WebAuthn authentication ceremony
+        const asseResp = await startAuthentication({ optionsJSON: options });
+
+        console.log('Assertion Response', asseResp);
+
+        // 3. Verify with backend
+        const verifyResponse = await api.post('/passkeys/authenticate/verify', {
+            credential: asseResp
+        });
+
+        console.log('Verify Response', verifyResponse);
+
+        return verifyResponse.data;
+    } catch (error) {
+        console.error('Passkey login failed:', error);
         throw error;
     }
 };

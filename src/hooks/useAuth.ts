@@ -19,11 +19,17 @@ export const useLogin = () => {
     return useMutation({
         mutationFn: async (credentials: AuthCredentials) => {
             const response = await api.post<AuthResponse>('/auth/login', credentials);
+            console.log(response.data);
             return response.data;
         },
         onSuccess: (data) => {
-            localStorage.setItem('access_token', data.access_token);
-            localStorage.setItem('user', JSON.stringify(data.user));
+            console.log('Login successful, response data:', data);
+            if (data.user) {
+                localStorage.setItem('access_token', data.access_token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+            } else {
+                console.error('Login response missing user object:', data);
+            }
         },
     });
 };
@@ -44,4 +50,17 @@ export const logout = () => {
 
 export const checkAuth = (): boolean => {
     return !!localStorage.getItem('access_token');
+};
+
+export const getUser = (): { email: string; hasPasskey: boolean; _id: string; } | null => {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+        try {
+            return JSON.parse(userStr);
+        } catch (e) {
+            console.error('Failed to parse user from local storage', e);
+            return null;
+        }
+    }
+    return null;
 };

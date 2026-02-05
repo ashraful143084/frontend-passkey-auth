@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import { startRegistration } from '@simplewebauthn/browser';
 import { mockPasskeyService } from '../services/mockPasskeyService';
+import { registerPasskey } from '../hooks/usePasskey';
+import { getUser } from '../hooks/useAuth';
 
 // Child Components
 import { Sidebar } from './dashboard/Sidebar';
@@ -135,25 +136,21 @@ const Dashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
             return;
         }
 
-        console.log('authType', authType, 'newPasskeyName', newPasskeyName);
+        console.log('newPasskeyName', newPasskeyName);
+
+        const user = getUser();
+        console.log('user', user);
+        if (!user) {
+            alert('User not found. Please log in.');
+            return;
+        }
 
         setPasskeyLoading(true);
         try {
-            const options = mockPasskeyService.getRegistrationOptions(newPasskeyName, authType);
-            console.log('options', options);
-            const attResp = await startRegistration({ optionsJSON: options });
-            console.log('attResp', attResp);
-            const verified = await mockPasskeyService.verifyRegistration(attResp, newPasskeyName);
-            console.log('verified', verified);
-
-            if (verified) {
-                setSavedPasskeys(mockPasskeyService.getRegisteredPasskeys());
-                setShowPasskeyModal(false);
-                setNewPasskeyName('');
-                alert('Passkey registered successfully! It is now saved for future logins.');
-            } else {
-                alert('Passkey registration failed');
-            }
+            await registerPasskey(user._id, user.email);
+            setNewPasskeyName('');
+            setShowPasskeyModal(false);
+            alert('Passkey registered successfully!');
         } catch (error) {
             console.error('Passkey registration error:', error);
             if ((error as Error).name !== 'NotAllowedError') {

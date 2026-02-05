@@ -20,7 +20,7 @@ interface AuthProps {
 const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
-  
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -91,33 +91,33 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLogin) {
-        loginMutation.mutate({ email, password }, {
-            onSuccess: () => {
-                onLogin();
-            },
-            onError: (error) => {
-                if(error instanceof Error) {
-                  alert(`Login failed: ${error.message}`);
-                } else {
-                  alert('Login failed');
-                }
-            }
-        });
+      loginMutation.mutate({ email, password }, {
+        onSuccess: () => {
+          onLogin();
+        },
+        onError: (error) => {
+          if (error instanceof Error) {
+            alert(`Login failed: ${error.message}`);
+          } else {
+            alert('Login failed');
+          }
+        }
+      });
     } else {
-        registerMutation.mutate({ email, password }, {
-          
-            onSuccess: () => {
-                alert("Registration successful! Please login.");
-                setIsLogin(true);
-            },
-            onError: (error) => {
-                if(error instanceof Error) {
-                  alert(`Registration failed: ${error.message}`);
-                } else {
-                  alert('Registration failed');
-                }
-            }
-        });
+      registerMutation.mutate({ email, password }, {
+
+        onSuccess: () => {
+          alert("Registration successful! Please login.");
+          setIsLogin(true);
+        },
+        onError: (error) => {
+          if (error instanceof Error) {
+            alert(`Registration failed: ${error.message}`);
+          } else {
+            alert('Registration failed');
+          }
+        }
+      });
     }
   };
 
@@ -126,6 +126,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
     try {
       // 1. Get options from server (mock)
       const options = mockPasskeyService.getAuthenticationOptions();
+
+      console.log('Options:', options);
 
       // 2. Start WebAuthn ceremony
       const asseResp = await startAuthentication({ optionsJSON: options });
@@ -254,14 +256,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin }) => {
                   className="w-full relative overflow-hidden bg-gradient-to-r from-teal-500 to-ocean-600 hover:from-teal-400 hover:to-ocean-500 text-white font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-3 group shadow-xl shadow-teal-500/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
-                      <>
-                        <span className="relative z-10">
-                            {isLogin ? "Log In" : "Sign Up"}
-                        </span>
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
-                      </>
+                    <>
+                      <span className="relative z-10">
+                        {isLogin ? "Log In" : "Sign Up"}
+                      </span>
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform relative z-10" />
+                    </>
                   )}
                   <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>

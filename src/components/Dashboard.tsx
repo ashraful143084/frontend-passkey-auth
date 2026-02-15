@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
-import { mockPasskeyService } from '../services/mockPasskeyService';
-import { registerPasskey } from '../hooks/usePasskey';
+
+import { registerPasskey, getPasskeys } from '../hooks/usePasskey';
 import { getUser } from '../hooks/useAuth';
 
 // Child Components
@@ -30,7 +30,14 @@ const Dashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
     const [authType, setAuthType] = useState<'platform' | 'cross-platform'>('platform');
 
     useEffect(() => {
-        setSavedPasskeys(mockPasskeyService.getRegisteredPasskeys());
+        const fetchPasskeys = async () => {
+            const user = getUser();
+            if (user) {
+                const keys = await getPasskeys(user._id);
+                setSavedPasskeys(keys);
+            }
+        };
+        fetchPasskeys();
     }, []);
 
     const [messages, setMessages] = useState<Record<string, Array<{ role: 'user' | 'ai', content: string }>>>({
@@ -147,9 +154,14 @@ const Dashboard: React.FC<{ onLogout: () => void }> = ({ onLogout }) => {
 
         setPasskeyLoading(true);
         try {
-            await registerPasskey(user._id, user.email);
+            await registerPasskey(user._id, user.email, newPasskeyName);
             setNewPasskeyName('');
             setShowPasskeyModal(false);
+
+            // Refresh list
+            const updatedKeys = await getPasskeys(user._id);
+            setSavedPasskeys(updatedKeys);
+
             alert('Passkey registered successfully!');
         } catch (error) {
             console.error('Passkey registration error:', error);

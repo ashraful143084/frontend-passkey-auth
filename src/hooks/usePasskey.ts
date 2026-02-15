@@ -1,7 +1,7 @@
 import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 import api from '../services/api';
 
-export const registerPasskey = async (userId: string, userEmail: string) => {
+export const registerPasskey = async (userId: string, userEmail: string, passkeyName: string) => {
     try {
         // 1. Get options from server
         // The backend expects body.user. I'll pass the userID.
@@ -22,7 +22,9 @@ export const registerPasskey = async (userId: string, userEmail: string) => {
             // We also send specific fields if the backend DTO requires them strictly at the root level,
             // but usually verification needs the full object.
             credentialId: attResp.id,
-            credential: attResp
+            credential: attResp,
+            name: passkeyName,
+            userAgent: navigator.userAgent
         });
 
         return verifyResponse.data;
@@ -56,5 +58,15 @@ export const loginPasskey = async () => {
     } catch (error) {
         console.error('Passkey login failed:', error);
         throw error;
+    }
+};
+
+export const getPasskeys = async (userId: string) => {
+    try {
+        const response = await api.post('/passkeys/list', { userId });
+        return response.data;
+    } catch (error) {
+        console.error('Failed to fetch passkeys:', error);
+        return [];
     }
 };
